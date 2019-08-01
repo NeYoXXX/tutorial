@@ -23,17 +23,19 @@ class Snippet(models.Model):
     class Meta:
         ordering = ('created',)
 
+    def save(self, *args, **kwargs):
+        """
+        使用`pygments`库创建一个高亮显示的HTML表示代码段。
+        """
+        lexer = get_lexer_by_name(self.language)
+        linenos = self.linenos and 'table' or False
+        options = self.title and {'title': self.title} or {}
+        formatter = HtmlFormatter(style=self.style, linenos=linenos,
+                                full=True, **options)
+        self.highlighted = highlight(self.code, lexer, formatter)
+        super(Snippet, self).save(*args, **kwargs)
+
 owner = models.ForeignKey('auth.User', related_name='Snippet', on_delete=models.CASCADE)
 highlighted = models.TextField()
 
-def save(self, *args, **kwargs):
-    """
-    使用`pygments`库创建一个高亮显示的HTML表示代码段。
-    """
-    lexer = get_lexer_by_name(self.language)
-    linenos = self.linenos and 'table' or False
-    options = self.title and {'title': self.title} or {}
-    formatter = HtmlFormatter(style=self.style, linenos=linenos,
-                              full=True, **options)
-    self.highlighted = highlight(self.code, lexer, formatter)
-    super(Snippet, self).save(*args, **kwargs)
+
